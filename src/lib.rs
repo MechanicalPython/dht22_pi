@@ -9,7 +9,6 @@
 
 
 extern crate rppal;
-extern crate libc;
 
 use std::ptr::read_volatile;
 use std::ptr::write_volatile;
@@ -21,10 +20,6 @@ use rppal::gpio::Gpio;
 use rppal::gpio::Level;
 use rppal::gpio::Mode;
 
-use libc::SCHED_FIFO;
-use libc::SCHED_OTHER;
-use libc::sched_setscheduler;
-use libc::sched_param;
 
 /// A temperature and humidity reading from the DHT22.
 #[derive(Debug)]
@@ -64,31 +59,6 @@ fn tiny_sleep() {
     }
 }
 
-fn set_max_priority() {
-    unsafe {
-        let param = sched_param {
-            sched_priority: 32
-        };
-        let result = sched_setscheduler(0, SCHED_FIFO, &param);
-
-        if result != 0 {
-            panic!("Error setting priority, you may not have cap_sys_nice capability");
-        }
-    }
-}
-
-fn set_default_priority() {
-    unsafe {
-        let param = sched_param {
-            sched_priority: 0
-        };
-        let result = sched_setscheduler(0, SCHED_OTHER, &param);
-
-        if result != 0 {
-            panic!("Error setting priority, you may not have cap_sys_nice capability");
-        }
-    }
-}
 
 fn decode(arr:[usize; DHT_PULSES*2]) -> Result<Reading, ReadingError> {
     let mut threshold:usize = 0;
@@ -152,8 +122,6 @@ pub fn read(pin: u8) -> Result<Reading, ReadingError> {
     };
 
     let mut pulse_counts: [usize; DHT_PULSES*2] = [0; DHT_PULSES * 2];
-                                                                      
-    set_max_priority(); 
 
     gpio.write(Level::High);
     sleep(Duration::from_millis(500));
@@ -196,8 +164,6 @@ pub fn read(pin: u8) -> Result<Reading, ReadingError> {
             }
         }
     }
-
-    set_default_priority();
 
     decode(pulse_counts)
 }

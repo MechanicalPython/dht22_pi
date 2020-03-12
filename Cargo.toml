@@ -12,4 +12,3 @@ edition = "2018"
 
 [dependencies]
 rppal = "0.11.3"
-libc = "0.2.21"
